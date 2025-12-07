@@ -1,0 +1,529 @@
+basePath: /api/v1
+definitions:
+  models.Category:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.Employee:
+    properties:
+      employee_code:
+        type: string
+      employee_name:
+        type: string
+      id:
+        type: integer
+      id_role:
+        type: integer
+      role:
+        allOf:
+        - $ref: '#/definitions/models.Role'
+        description: Relasi (Belongs To)
+      user_id:
+        type: string
+      warehouse:
+        $ref: '#/definitions/models.Warehouse'
+      warehouse_code:
+        type: string
+    type: object
+  models.Inventory:
+    properties:
+      code_product:
+        type: string
+      code_warehouse:
+        type: string
+      id:
+        type: integer
+      id_size:
+        type: integer
+      product:
+        allOf:
+        - $ref: '#/definitions/models.Product'
+        description: Relasi (Belongs To)
+      quantity:
+        type: integer
+      size:
+        $ref: '#/definitions/models.Size'
+      warehouse:
+        $ref: '#/definitions/models.Warehouse'
+    type: object
+  models.Product:
+    properties:
+      category:
+        allOf:
+        - $ref: '#/definitions/models.Category'
+        description: Relasi (Belongs To)
+      description_product:
+        description: Diasumsikan bisa null
+        type: string
+      id:
+        type: integer
+      id_category:
+        type: integer
+      price:
+        type: integer
+      product_code:
+        type: string
+      product_details:
+        description: Relasi (Has Many)
+        items:
+          $ref: '#/definitions/models.ProductDetail'
+        type: array
+      product_name:
+        type: string
+    type: object
+  models.ProductDetail:
+    properties:
+      barcode:
+        type: string
+      code_product:
+        type: string
+      id:
+        type: integer
+      id_size:
+        type: integer
+      product:
+        allOf:
+        - $ref: '#/definitions/models.Product'
+        description: Relasi (Belongs To)
+      size:
+        $ref: '#/definitions/models.Size'
+    type: object
+  models.Role:
+    properties:
+      id:
+        type: integer
+      role_name:
+        type: string
+    type: object
+  models.Size:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.Warehouse:
+    properties:
+      id:
+        type: integer
+      inventories:
+        description: Relasi (Has Many)
+        items:
+          $ref: '#/definitions/models.Inventory'
+        type: array
+      location_description:
+        type: string
+      warehouse_code:
+        type: string
+      warehouse_name:
+        type: string
+    type: object
+  request.CreateEmployee:
+    properties:
+      employee_name:
+        type: string
+      id_role:
+        type: integer
+      password:
+        type: string
+      warehouse_code:
+        type: string
+    required:
+    - employee_name
+    - id_role
+    - password
+    - warehouse_code
+    type: object
+  request.CreateWarehouse:
+    properties:
+      location_description:
+        type: string
+      warehouse_code:
+        type: string
+      warehouse_name:
+        type: string
+    required:
+    - warehouse_code
+    - warehouse_name
+    type: object
+  request.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  request.UpdateWarehouse:
+    properties:
+      location_description:
+        type: string
+      warehouse_name:
+        type: string
+    type: object
+  request.UpdatedEmployee:
+    properties:
+      employee_name:
+        type: string
+      id_role:
+        type: integer
+      password:
+        type: string
+      warehouse_code:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@anda.com
+    name: API Support
+  description: API untuk sistem manajemen warehouse (WMS).
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Warehouse Management API
+  version: "1.0"
+paths:
+  /employees:
+    get:
+      description: Mengambil daftar employee yang difilter berdasarkan warehouse_code
+      parameters:
+      - description: Kode Warehouse
+        in: query
+        name: warehouse_code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Employee'
+            type: array
+        "400":
+          description: Missing warehouse_code query
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Get Employee Berdasarkan Warehouse
+      tags:
+      - employees
+    post:
+      consumes:
+      - application/json
+      description: Membuat employee baru dengan data yang diberikan
+      parameters:
+      - description: Data Employee Baru
+        in: body
+        name: employee
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateEmployee'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Employee'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Buat Employee Baru
+      tags:
+      - employees
+  /employees/{id}:
+    delete:
+      description: Menghapus data employee berdasarkan ID
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "404":
+          description: Employee tidak ditemukan
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Hapus Employee
+      tags:
+      - employees
+    get:
+      description: Mengambil satu data employee berdasarkan ID
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Employee'
+        "400":
+          description: ID tidak valid
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "404":
+          description: Employee tidak ditemukan
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Get Employee Berdasarkan ID
+      tags:
+      - employees
+    patch:
+      consumes:
+      - application/json
+      description: Memperbarui data employee (bisa sebagian) berdasarkan ID
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data update employee
+        in: body
+        name: employee
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdatedEmployee'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: ID atau data JSON tidak valid
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "404":
+          description: Employee tidak ditemukan
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Update Employee (Parsial)
+      tags:
+      - employees
+  /employees/by-warehouse:
+    get:
+      description: Mengambil daftar employee yang difilter berdasarkan warehouse_code
+      parameters:
+      - description: Kode Warehouse
+        in: query
+        name: warehouse_code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Employee'
+            type: array
+        "400":
+          description: Missing warehouse_code query
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Get Employee Berdasarkan Warehouse
+      tags:
+      - employees
+  /warehouses:
+    get:
+      description: Mengambil daftar semua warehouse
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Warehouse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Get Semua Warehouse
+      tags:
+      - warehouses
+    post:
+      consumes:
+      - application/json
+      description: Membuat warehouse baru
+      parameters:
+      - description: Data Warehouse Baru
+        in: body
+        name: warehouse
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateWarehouse'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Warehouse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Buat Warehouse Baru
+      tags:
+      - warehouses
+  /warehouses/{id}:
+    delete:
+      description: Menghapus data warehouse berdasarkan ID
+      parameters:
+      - description: Warehouse ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "404":
+          description: Warehouse tidak ditemukan
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Hapus Warehouse
+      tags:
+      - warehouses
+    get:
+      description: Mengambil satu data warehouse berdasarkan ID
+      parameters:
+      - description: Warehouse ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Warehouse'
+        "400":
+          description: ID tidak valid
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "404":
+          description: Warehouse tidak ditemukan
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Get Warehouse Berdasarkan ID
+      tags:
+      - warehouses
+    patch:
+      consumes:
+      - application/json
+      description: Memperbarui data warehouse (bisa sebagian) berdasarkan ID
+      parameters:
+      - description: Warehouse ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data update warehouse
+        in: body
+        name: warehouse
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateWarehouse'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: ID atau data JSON tidak valid
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "404":
+          description: Warehouse tidak ditemukan
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/request.ErrorResponse'
+      summary: Update Warehouse (Parsial)
+      tags:
+      - warehouses
+swagger: "2.0"
